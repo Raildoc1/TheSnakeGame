@@ -91,6 +91,10 @@ public class Snake {
         return false;
     }
 
+    public void die() {
+        snake.clear();
+    }
+
     private boolean canMove(Vector2 direction) {
 
         if(snake.size() < 2)

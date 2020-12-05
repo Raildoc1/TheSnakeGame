@@ -1,6 +1,7 @@
 package ru.gaiduk.snake.view;
 
 import ru.gaiduk.snake.game.Board;
+import ru.gaiduk.snake.network.Node;
 
 import javax.swing.*;
 
@@ -8,23 +9,21 @@ public class GameFrame extends JFrame {
 
     private final static String APP_NAME = "Snake";
 
-    private static final int WIN_WIDTH = 250;
-    private static final int WIN_HEIGHT = 350;
     private static final int GRID_SCALE = 15;
 
-    Board board;
+    Node node;
 
-    public GameFrame (Board board) {
-        this.board = board;
+    public GameFrame (Node node) {
+        this.node = node;
     }
 
     public void init() {
-        add(new GamePanel(board, GRID_SCALE));
-        setSize((board.getWidth() + 3) * GRID_SCALE, (board.getHeight() + 3) * GRID_SCALE + 22);
+        add(new GamePanel(node.getBoard(), GRID_SCALE));
+        setSize((node.getBoardSize().getX() + 3) * GRID_SCALE, (node.getBoardSize().getY() + 3) * GRID_SCALE + 22);
         setTitle(APP_NAME);
         setResizable(false);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.addKeyListener(new Input(board));
+        this.addKeyListener(new Input(node));
         setLocationRelativeTo(null);
     }
 

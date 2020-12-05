@@ -1,13 +1,12 @@
 package ru.gaiduk.snake.game;
 
+import me.ippolitov.fit.snakes.SnakesProto;
 import ru.gaiduk.snake.math.Vector2;
 import ru.gaiduk.snake.view.IUpdatable;
 
+import javax.print.attribute.standard.PrinterMakeAndModel;
 import java.awt.image.AreaAveragingScaleFilter;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class Board {
 
@@ -17,23 +16,27 @@ public class Board {
     private Snake mySnake;
     private boolean lost = false;
 
+    private Random random;
+
     private ArrayList<IUpdatable> toUpdate;
 
-    private int width = 30;
-    private int height = 30;
+    SnakesProto.GameConfig gameConfig;
 
-    private int foodAmount = 300;
+    //private int width = 30;
+    //private int height = 30;
+
+    //private int foodAmount = 300;
 
     private Timer timer;
     private TimerTask timerTask;
 
-    private int deltaTimeMillis;
-    private int targetFPS = 5;
+    //private int deltaTimeMillis;
+    //private int targetFPS = 5;
     private int delayMillis = 500;
 
-    public int getWidth() { return width; }
+    public int getWidth() { return gameConfig.getWidth(); }
     public int getHeight() {
-        return height;
+        return gameConfig.getHeight();
     }
 
     public boolean isLost() { return lost; }
@@ -42,21 +45,21 @@ public class Board {
     public ArrayList<Snake> getSnakes() { return (ArrayList<Snake>) snakes.clone(); }
     public Snake getSnake() { return mySnake; };
 
-    public Board () {
+    public Board (SnakesProto.GameConfig gameConfig) {
+        this.gameConfig = gameConfig;
         toUpdate = new ArrayList<>();
         snakes = new ArrayList<>();
         food = new ArrayList<>();
+        random = new Random();
     }
 
     public void start() {
 
         // TEST
-        snakes.add(new Snake(5, 3, height, width));
-        snakes.add(new Snake(7, 15, height, width));
+        snakes.add(new Snake(5, 3, getHeight(), getWidth()));
+        snakes.add(new Snake(7, 15, getHeight(), getWidth()));
 
-        mySnake = new Snake(15, 10, height, width);
-
-        init();
+        mySnake = new Snake(15, 10, getHeight(), getWidth());
 
         timer = new Timer();
         timerTask = new TimerTask() {
@@ -66,16 +69,12 @@ public class Board {
             }
         };
 
-        deltaTimeMillis = 1000/targetFPS;
-        timer.schedule(timerTask, delayMillis, deltaTimeMillis);
+        //deltaTimeMillis = 1000/targetFPS;
+        timer.schedule(timerTask, delayMillis, gameConfig.getStateDelayMs());
     }
 
     public void registerUpdateCallback(IUpdatable updatable) {
         toUpdate.add(updatable);
-    }
-
-    private void init() {
-
     }
 
     private void update() {
@@ -85,13 +84,15 @@ public class Board {
             snake.move();
         }
 
-        mySnake.move();
+        if(!lost) {
+            mySnake.move();
+        }
 
         // TODO: check snakes intersect
 
         // Create new food
-        if(food.size() < foodAmount) {
-            var newFoodEntity = Vector2.clamp(Vector2.Random(), width, height);
+        if(food.size() < gameConfig.getFoodStatic() + gameConfig.getFoodPerPlayer() * (snakes.size() + 1)) {
+            var newFoodEntity = Vector2.clamp(Vector2.Random(), getWidth(), getHeight());
             food.add(newFoodEntity);
         }
 
@@ -102,7 +103,7 @@ public class Board {
 
             var f = foodIterator.next();
 
-            if(mySnake.eatOn(f)) {
+            if(!lost && mySnake.eatOn(f)) {
                 foodIterator.remove();
                 break;
             }
@@ -130,13 +131,16 @@ public class Board {
         Iterator<Snake> snakeIterator = snakes.iterator();
 
         while (snakeIterator.hasNext()) {
-            if(snakeIterator.next().checkSelfCollision()) {
+            var snake = snakeIterator.next();
+            if(snake.checkSelfCollision()) {
+                Snake2Food(snake);
                 snakeIterator.remove();
             }
         }
 
-        if(mySnake.checkSelfCollision()) {
+        if(!lost && mySnake.checkSelfCollision()) {
             lost = true;
+            Snake2Food(mySnake);
         }
 
         // Update
@@ -145,7 +149,24 @@ public class Board {
         }
     }
 
+    private void Snake2Food(Snake snake) {
+        for (var segment : snake.getSegments()) {
+            if (isDeadFoodMustBeCreated()) {
+                food.add(segment);
+            }
+        }
+        snake.die();
+    }
+
+    public boolean isDeadFoodMustBeCreated() {
+        float f = random.nextFloat();
+        return f < gameConfig.getDeadFoodProb();
+    }
+
     public void changeDirection(int x, int y) {
+        if(lost) {
+            return;
+        }
         mySnake.ChangeDirection(new Vector2(sgn(x), sgn(y)));
     }
 

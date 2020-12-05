@@ -1,5 +1,6 @@
 package ru.gaiduk.snake.game;
 
+import ru.gaiduk.snake.network.Node;
 import ru.gaiduk.snake.view.GameFrame;
 
 import java.awt.*;
@@ -8,16 +9,16 @@ public class Main {
 
     public static void main(String[] args) {
 
-        Board board = new Board();
+        Node node = new Node();
 
-        GameFrame frame = new GameFrame(board);
+        GameFrame frame = new GameFrame(node);
 
         EventQueue.invokeLater(() -> {
             frame.init();
             frame.setVisible(true);
         });
 
-        board.start();
+        node.startNewGame();
 
     }
 }
