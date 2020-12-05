@@ -4,12 +4,11 @@ import me.ippolitov.fit.snakes.SnakesProto;
 import ru.gaiduk.snake.math.Vector2;
 import ru.gaiduk.snake.view.IUpdatable;
 
-import javax.print.attribute.standard.PrinterMakeAndModel;
-import java.awt.image.AreaAveragingScaleFilter;
 import java.util.*;
 
 public class Board {
 
+    private ArrayList<SnakesProto.GamePlayer> gamePlayers;
     private ArrayList<Snake> snakes;
     private ArrayList<Vector2> food;
 
@@ -22,16 +21,9 @@ public class Board {
 
     SnakesProto.GameConfig gameConfig;
 
-    //private int width = 30;
-    //private int height = 30;
-
-    //private int foodAmount = 300;
-
     private Timer timer;
     private TimerTask timerTask;
 
-    //private int deltaTimeMillis;
-    //private int targetFPS = 5;
     private int delayMillis = 500;
 
     public int getWidth() { return gameConfig.getWidth(); }
@@ -51,6 +43,7 @@ public class Board {
         snakes = new ArrayList<>();
         food = new ArrayList<>();
         random = new Random();
+        gamePlayers = new ArrayList<SnakesProto.GamePlayer>();
     }
 
     public void start() {
@@ -69,12 +62,23 @@ public class Board {
             }
         };
 
-        //deltaTimeMillis = 1000/targetFPS;
         timer.schedule(timerTask, delayMillis, gameConfig.getStateDelayMs());
     }
 
     public void registerUpdateCallback(IUpdatable updatable) {
         toUpdate.add(updatable);
+    }
+
+    public SnakesProto.GamePlayers getGamePlayers() {
+
+        SnakesProto.GamePlayers.Builder builder = SnakesProto.GamePlayers.newBuilder();
+
+        for (int i = 0; i < gamePlayers.size(); i++) {
+            builder.setPlayers(i, gamePlayers.get(i));
+        }
+
+        return builder.build();
+
     }
 
     private void update() {
