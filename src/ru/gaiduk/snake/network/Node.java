@@ -4,6 +4,7 @@ import me.ippolitov.fit.snakes.SnakesProto;
 import ru.gaiduk.snake.game.Board;
 import ru.gaiduk.snake.math.Vector2;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -26,7 +27,8 @@ public class Node {
     private Board board;
 
     private Timer timer;
-    private TimerTask timerTask;
+    private TimerTask announcementMsgTimerTask;
+    private TimerTask gameUpdateTimerTask;
 
     private int deltaTimeMillis = 1000;
     private int delayMillis = 500;
@@ -45,14 +47,27 @@ public class Node {
         sender = new MulticastSender();
 
         timer = new Timer();
-        timerTask = new TimerTask() {
+        announcementMsgTimerTask = new TimerTask() {
             @Override
             public void run() {
-                sendAnnouncementMsg();
+                try {
+                    sendAnnouncementMsg();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         };
 
-        timer.schedule(timerTask, delayMillis, deltaTimeMillis);
+        gameUpdateTimerTask = new TimerTask() {
+            @Override
+            public void run() {
+                board.update();
+                // TODO: send game state
+            }
+        };
+
+        timer.schedule(announcementMsgTimerTask, delayMillis, deltaTimeMillis);
+        timer.schedule(gameUpdateTimerTask, delayMillis, gameConfig.getStateDelayMs());
     }
 
     public void changeDirection(int x, int y) {
@@ -75,8 +90,20 @@ public class Node {
                 .build();
     }
 
-    private void sendAnnouncementMsg() {
+    private void sendAnnouncementMsg() throws IOException {
+        sender.SendAnnouncementMessage(createAnnouncementMsg());
+    }
 
+    private SnakesProto.GameMessage.StateMsg getGameStateMsg() {
+        return SnakesProto.GameMessage.StateMsg.newBuilder().setState(board.getGameState()).build();
+    }
+
+    private void applyState(SnakesProto.GameState state) {
+
+    }
+
+    public void printKeyPoints() {
+        board.printKeyPoints();
     }
 
 }

@@ -1,5 +1,7 @@
 package ru.gaiduk.snake.math;
 
+import me.ippolitov.fit.snakes.SnakesProto;
+
 import java.util.Objects;
 import java.util.Random;
 
@@ -41,6 +43,18 @@ public class Vector2 {
 
     public static Vector2 clamp(Vector2 v, int x, int y) {
         return new Vector2((v.getX() % x + x) % x, (v.getY() % y + y) % y);
+    }
+
+    public SnakesProto.GameState.Coord convertToCoord() {
+        return SnakesProto.GameState.Coord.newBuilder().setX(getX()).setY(getY()).build();
+    }
+
+    public static Vector2 Sub(Vector2 a, Vector2 b) {
+        return new Vector2(a.getX() - b.getX(), a.getY() - b.getY());
+    }
+
+    public static Vector2 Mul(Vector2 a, int c) {
+        return new Vector2(a.getX() * c, a.getY() * c);
     }
 
     @Override

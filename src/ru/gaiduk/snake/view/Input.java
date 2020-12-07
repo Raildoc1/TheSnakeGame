@@ -17,5 +17,6 @@ public class Input extends KeyAdapter {
         if (event.getKeyCode() == 83) node.changeDirection(0, 1); // S
         if (event.getKeyCode() == 68) node.changeDirection(1, 0); // D
         if (event.getKeyCode() == 65) node.changeDirection(-1 ,0); // A
+        if (event.getKeyCode() == 81) node.printKeyPoints(); // Q
     }
 }

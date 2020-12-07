@@ -4,6 +4,7 @@ import me.ippolitov.fit.snakes.SnakesProto;
 import ru.gaiduk.snake.math.Vector2;
 import ru.gaiduk.snake.view.IUpdatable;
 
+import java.awt.image.AreaAveragingScaleFilter;
 import java.util.*;
 
 public class Board {
@@ -25,6 +26,8 @@ public class Board {
     private TimerTask timerTask;
 
     private int delayMillis = 500;
+
+    private int stateOrder = 0;
 
     public int getWidth() { return gameConfig.getWidth(); }
     public int getHeight() {
@@ -49,20 +52,32 @@ public class Board {
     public void start() {
 
         // TEST
-        snakes.add(new Snake(5, 3, getHeight(), getWidth()));
-        snakes.add(new Snake(7, 15, getHeight(), getWidth()));
+        snakes.add(new Snake(5, 3, getHeight(), getWidth(), 0));
+        snakes.add(new Snake(7, 15, getHeight(), getWidth(), 1));
 
-        mySnake = new Snake(15, 10, getHeight(), getWidth());
+        mySnake = new Snake(15, 10, getHeight(), getWidth(), 3);
 
-        timer = new Timer();
-        timerTask = new TimerTask() {
-            @Override
-            public void run() {
-                update();
+//        timer = new Timer();
+//        timerTask = new TimerTask() {
+//            @Override
+//            public void run() {
+//                update();
+//            }
+//        };
+//
+//        timer.schedule(timerTask, delayMillis, gameConfig.getStateDelayMs());
+    }
+
+    public void updatePlayer(SnakesProto.GamePlayer player) {
+
+        for (var p : gamePlayers) {
+            if(p.getId() == player.getId()) {
+                p = player;
+                return;
             }
-        };
+        }
 
-        timer.schedule(timerTask, delayMillis, gameConfig.getStateDelayMs());
+        gamePlayers.add(player);
     }
 
     public void registerUpdateCallback(IUpdatable updatable) {
@@ -81,7 +96,9 @@ public class Board {
 
     }
 
-    private void update() {
+    public void update() {
+
+        stateOrder++;
 
         // Move Snakes
         for (var snake : snakes) {
@@ -172,6 +189,56 @@ public class Board {
             return;
         }
         mySnake.ChangeDirection(new Vector2(sgn(x), sgn(y)));
+    }
+
+    public List<SnakesProto.GameState.Snake> getSnakesList() {
+
+        ArrayList<SnakesProto.GameState.Snake> result = new ArrayList<>();
+
+        for (var snake : snakes) {
+            result.add(snake.convertToProtoSnake());
+        }
+
+        return result;
+    }
+
+    public List<SnakesProto.GameState.Coord> getFoodList() {
+
+        ArrayList<SnakesProto.GameState.Coord> result = new ArrayList<>();
+
+        for (var f : food) {
+            result.add(f.convertToCoord());
+        }
+
+        return result;
+    }
+
+    public void printKeyPoints() {
+
+        System.out.println("KEY POINTS:");
+
+        for (var p : mySnake.getKeyPoints()) {
+            System.out.println("( " + p.getX() + "," + p.getY() + ")");
+        }
+    }
+
+    public SnakesProto.GameState getGameState() {
+
+        var stateBuilder = SnakesProto.GameState.newBuilder().setStateOrder(stateOrder);
+
+        for (var snake : getSnakesList()) {
+            stateBuilder.addSnakes(snake);
+        }
+
+        for (var food : getFoodList()) {
+            stateBuilder.addFoods(food);
+        }
+
+        stateBuilder.setPlayers(getGamePlayers());
+
+        stateBuilder.setConfig(gameConfig);
+
+        return stateBuilder.build();
     }
 
     public static int sgn(int x) {
