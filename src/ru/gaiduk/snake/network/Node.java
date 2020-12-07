@@ -60,15 +60,48 @@ public class Node {
         socket.setSoTimeout(TIME_OUT_MILLIS);
     }
 
-    public void connect() throws IOException {
+    public void connect() throws IOException, ClassNotFoundException {
         nodeRole = SnakesProto.NodeRole.NORMAL;
         DatagramPacket packet = new DatagramPacket(buf, buf.length, InetAddress.getLocalHost(), 5000);
         var joinMsg = SnakesProto.GameMessage.JoinMsg.newBuilder().setName("Not Vanya, because Vanya can be only one!").build();
 
+        var gameMsg = SnakesProto.GameMessage.newBuilder().setJoin(joinMsg).setMsgSeq(System.currentTimeMillis()).build();
 
-        packet.setData(obj2bytes(joinMsg));
+        packet.setData(obj2bytes(gameMsg));
         socket.send(packet);
-        board.start();
+
+
+        if(handleAckMsg()) {
+            board.start();
+        }
+
+    }
+
+    private boolean handleAckMsg() throws ClassNotFoundException {
+        SnakesProto.GameMessage gameMsg;
+        while(true) {
+            try {
+                DatagramPacket packet1 = new DatagramPacket(buf, buf.length);
+                socket.receive(packet1);
+
+                Object obj = parseObject(packet1.getData());
+
+                if(as(SnakesProto.GameMessage.class, obj) != null) {
+                    gameMsg = (SnakesProto.GameMessage)obj;
+                    if(gameMsg.hasAck()) {
+                        System.out.println("Joined successfully!");
+                        return true;
+                    } else if (gameMsg.hasError()) {
+                        System.out.println("Error occur :c");
+                        return false;
+                    }
+                }
+
+                break;
+            } catch (IOException e) { /* IGNORE */}
+        }
+
+        return false;
     }
 
     public byte[] obj2bytes(Object obj) throws IOException {
@@ -106,7 +139,11 @@ public class Node {
             @Override
             public void run() {
                 board.update();
-                // TODO: send game state
+                try {
+                    sendGameState();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         };
 
@@ -118,6 +155,27 @@ public class Node {
         }
     }
 
+    private void sendGameState() throws IOException {
+        if (connections.size() < 1) {
+            return;
+        }
+
+        var stateMsg = SnakesProto.GameMessage.StateMsg.newBuilder().setState(board.getGameState()).build();
+
+        var gameMsg = SnakesProto.GameMessage.newBuilder().setMsgSeq(System.currentTimeMillis()).setState(stateMsg).build();
+
+        for (var con : connections) {
+            sendObjectTo(gameMsg, con.address, con.port);
+        }
+    }
+
+    private void sendObjectTo(Object object, InetAddress ip, int port) throws IOException {
+        byte[] buffer = new byte[MAX_MSG_LENGTH];
+        DatagramPacket ackPacket = new DatagramPacket(buffer, buffer.length, ip, port);
+        ackPacket.setData(obj2bytes(object));
+        socket.send(ackPacket);
+    }
+
     private void listenTick() {
         try {
 
@@ -126,9 +184,35 @@ public class Node {
 
             Object obj = parseObject(packet.getData());
 
-            if(as(SnakesProto.GameMessage.JoinMsg.class, obj) != null) {
-                var joinMsg = (SnakesProto.GameMessage.JoinMsg)obj;
-                System.out.println("Got join message from " + joinMsg.getName());
+            if(as(SnakesProto.GameMessage.class, obj) != null) {
+                var gameMsg = (SnakesProto.GameMessage)obj;
+
+                if(gameMsg.hasJoin()) {
+                    System.out.println("Got join message from " + gameMsg.getJoin().getName() + " " + packet.getAddress() + " " + packet.getPort());
+
+                    DatagramPacket ackPacket = new DatagramPacket(buf, buf.length, packet.getAddress(), packet.getPort());
+
+                    var answerGameMsgBuilder = SnakesProto.GameMessage.newBuilder().setMsgSeq(System.currentTimeMillis());
+
+                    int newSnakeId = board.addSnake();
+                    if(newSnakeId < 0) {
+                        var errorMsg = SnakesProto.GameMessage.ErrorMsg.newBuilder().setErrorMessage("Board is full").build();
+                        answerGameMsgBuilder.setError(errorMsg);
+                    } else {
+                        connections.add(new Connection(packet.getAddress(), packet.getPort()));
+
+                        var ackMsg = SnakesProto.GameMessage.AckMsg.newBuilder().build();
+                        answerGameMsgBuilder.setReceiverId(newSnakeId).setAck(ackMsg);
+                    }
+
+                    var answerGameMsg = answerGameMsgBuilder.build();
+
+                    ackPacket.setData(obj2bytes(answerGameMsg));
+                    socket.send(ackPacket);
+
+                    System.out.println("AckPacket sent");
+                }
+
             }
 
         } catch (IOException | ClassNotFoundException e) { /*IGNORE*/ }

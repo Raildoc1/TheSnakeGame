@@ -29,12 +29,15 @@ public class Board {
 
     private int stateOrder = 0;
 
+    private boolean active = false;
+
     public int getWidth() { return gameConfig.getWidth(); }
     public int getHeight() {
         return gameConfig.getHeight();
     }
 
     public boolean isLost() { return lost; }
+    public boolean isActive() { return active;}
 
     public ArrayList<Vector2> getFood() { return (ArrayList<Vector2>) food.clone(); }
     public ArrayList<Snake> getSnakes() { return (ArrayList<Snake>) snakes.clone(); }
@@ -56,6 +59,19 @@ public class Board {
         snakes.add(new Snake(7, 15, getHeight(), getWidth(), 1));
 
         mySnake = new Snake(15, 10, getHeight(), getWidth(), 3);
+
+        active = true;
+
+    }
+
+    public int addSnake() {
+        // TODO: if cannot create return -1
+
+        int player_id = snakes.size() + 1;
+
+        snakes.add(new Snake(5, 3, getHeight(), getWidth(), player_id));
+
+        return  player_id;
     }
 
     public void updatePlayer(SnakesProto.GamePlayer player) {

@@ -32,6 +32,10 @@ public class GamePanel extends JPanel implements ActionListener, IUpdatable {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
+        if(!board.isActive()) {
+            return;
+        }
+
         /*
         if(board.isLost()) {
             g.setColor(new Color(228, 61, 56));
