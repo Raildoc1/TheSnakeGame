@@ -5,6 +5,7 @@ import ru.gaiduk.snake.math.Vector2;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class Snake {
@@ -33,6 +34,15 @@ public class Snake {
         snake = new ArrayList<>();
         snake.add(Vector2.clamp(new Vector2(x, y), boardWidth, boardHeight));
         this.playerId = playerId;
+    }
+
+    public Snake(int boardHeight, int boardWidth, SnakesProto.GameState.Snake protoSnake) {
+        init(boardHeight, boardWidth);
+        playerId = protoSnake.getPlayerId();
+        state = protoSnake.getState();
+        snake = new ArrayList<>();
+        setKeyPoints(protoSnake.getPointsList());
+        setDirection(protoSnake.getHeadDirection());
     }
 
     private void init(int boardHeight, int boardWidth) {
@@ -132,6 +142,23 @@ public class Snake {
         }
     }
 
+    public void setDirection(SnakesProto.Direction dir) {
+        switch (dir) {
+            case UP:
+                direction = new Vector2(0, 1);
+                break;
+            case DOWN:
+                direction = new Vector2(0, -1);
+                break;
+            case LEFT:
+                direction = new Vector2(-1, 0);
+                break;
+            case RIGHT:
+                direction = new Vector2(1, 0);
+                break;
+        }
+    }
+
     public ArrayList<Vector2> getKeyPoints() {
 
         if(snake.size() == 1) {
@@ -182,6 +209,26 @@ public class Snake {
 
         return builder.build();
 
+    }
+
+    public void setKeyPoints(List<SnakesProto.GameState.Coord> keyPoints) {
+        snake.clear();
+        snake.add(new Vector2(keyPoints.get(0)));
+        keyPoints.remove(0);
+
+        for (var point : keyPoints) {
+            if(point.getX() > 0) {
+                for(int i = 0; i < Math.abs(point.getX()); i++) {
+                    snake.add(Vector2.Add(new Vector2(point.getX() / Math.abs(point.getX()), 0), snake.get(snake.size() - 1)));
+                }
+                continue;
+            } else {
+                for(int i = 0; i < Math.abs(point.getY()); i++) {
+                    snake.add(Vector2.Add(new Vector2(0, point.getY() / Math.abs(point.getY())), snake.get(snake.size() - 1)));
+                }
+                continue;
+            }
+        }
     }
 
 }

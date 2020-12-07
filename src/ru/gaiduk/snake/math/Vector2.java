@@ -15,6 +15,11 @@ public class Vector2 {
         this.y = y;
     }
 
+    public Vector2(SnakesProto.GameState.Coord coord) {
+        this.x = coord.getX();
+        this.y = coord.getY();
+    }
+
     public int getX() {
         return x;
     }
@@ -51,6 +56,10 @@ public class Vector2 {
 
     public static Vector2 Sub(Vector2 a, Vector2 b) {
         return new Vector2(a.getX() - b.getX(), a.getY() - b.getY());
+    }
+
+    public static Vector2 Add(Vector2 a, Vector2 b) {
+        return new Vector2(a.getX() + b.getX(), a.getY() + b.getY());
     }
 
     public static Vector2 Mul(Vector2 a, int c) {

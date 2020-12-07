@@ -56,16 +56,6 @@ public class Board {
         snakes.add(new Snake(7, 15, getHeight(), getWidth(), 1));
 
         mySnake = new Snake(15, 10, getHeight(), getWidth(), 3);
-
-//        timer = new Timer();
-//        timerTask = new TimerTask() {
-//            @Override
-//            public void run() {
-//                update();
-//            }
-//        };
-//
-//        timer.schedule(timerTask, delayMillis, gameConfig.getStateDelayMs());
     }
 
     public void updatePlayer(SnakesProto.GamePlayer player) {
@@ -239,6 +229,36 @@ public class Board {
         stateBuilder.setConfig(gameConfig);
 
         return stateBuilder.build();
+    }
+
+    public void applyState(SnakesProto.GameState state) {
+        stateOrder = state.getStateOrder();
+        setProtoFood(state.getFoodsList());
+        setProtoPlayers(state.getPlayers());
+        gameConfig = state.getConfig();
+
+        var protoSnakes = state.getSnakesList();
+
+        snakes.clear();
+
+        for (var protoSnake : protoSnakes) {
+            snakes.add(new Snake(getHeight(), getWidth(), protoSnake));
+        }
+    }
+
+    public void setProtoFood(List<SnakesProto.GameState.Coord> food) {
+        this.food.clear();
+
+        for (var f : food) {
+            this.food.add(new Vector2(f.getX(), f.getY()));
+        }
+    }
+    public void setProtoPlayers(SnakesProto.GamePlayers players) {
+        gamePlayers.clear();
+
+        for (var p : players.getPlayersList()) {
+            gamePlayers.add(p);
+        }
     }
 
     public static int sgn(int x) {
