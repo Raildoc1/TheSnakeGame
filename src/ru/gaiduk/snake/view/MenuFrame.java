@@ -157,7 +157,6 @@ public class MenuFrame extends JFrame {
                     }
                 }
 
-
                 JButton button = new JButton("connection");
 
                 button.addActionListener(new AbstractAction() {
@@ -183,7 +182,7 @@ public class MenuFrame extends JFrame {
 
     private void checkConnections() {
         for (var connection : connectionButtons) {
-            if(System.currentTimeMillis() - connection.timeMillis > 2000) {
+            if(System.currentTimeMillis() - connection.timeMillis > 5000) {
                 connectionButtons.remove(connection);
                 updateButtons();
                 return;

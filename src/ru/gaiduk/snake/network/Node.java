@@ -422,7 +422,11 @@ public class Node {
 
     public void close() {
         timer.cancel();
-        sender.close();
+        if(sender != null) {
+            sender.close();
+        }
+        socket.disconnect();
+        socket.close();
     }
 
 }
