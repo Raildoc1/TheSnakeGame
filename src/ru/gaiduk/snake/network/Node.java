@@ -281,6 +281,7 @@ public class Node {
 
     public void printKeyPoints() {
         board.printKeyPoints();
+        return;
     }
 
 }

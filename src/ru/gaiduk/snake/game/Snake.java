@@ -222,9 +222,10 @@ public class Snake {
 
             if(point == keyPoints.get(0)) continue;
 
-            if(point.getX() > 0) {
+            if(point.getX() != 0) {
                 for(int i = 0; i < Math.abs(point.getX()); i++) {
-                    snake.add(Vector2.Add(new Vector2(point.getX() / Math.abs(point.getX()), 0), snake.get(snake.size() - 1)));
+                    Vector2 newSegment = Vector2.Add(new Vector2(point.getX() / Math.abs(point.getX()), 0), snake.get(snake.size() - 1));
+                    snake.add(newSegment);
                 }
                 continue;
             } else {
