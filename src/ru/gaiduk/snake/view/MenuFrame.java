@@ -53,7 +53,11 @@ public class MenuFrame extends JFrame {
 
     private ExecutorService executorService;
 
+    private JTextField field;
+
     public MenuFrame (int port, JFrame gameFrame, Node node) throws IOException {
+
+        field = new JTextField(20);
 
         socket = new MulticastSocket(9192);
         group = InetAddress.getByName("239.192.0.4");
@@ -79,7 +83,7 @@ public class MenuFrame extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 gameFrame.setVisible(true);
                 try {
-                    node.startNewGame();
+                    node.startNewGame(field.getText());
                     setVisible(false);
                 } catch (SocketException ex) {
                     ex.printStackTrace();
@@ -88,6 +92,8 @@ public class MenuFrame extends JFrame {
                 }
             }
         });
+
+        panel.add(field);
 
         panel.add(newGameButton);
 
@@ -126,6 +132,7 @@ public class MenuFrame extends JFrame {
 
     private void updateButtons() {
         panel.removeAll();
+        panel.add(field);
         panel.add(newGameButton);
         for (var b : connectionButtons) {
             panel.add(b.button);
@@ -142,14 +149,14 @@ public class MenuFrame extends JFrame {
         socket.receive(packet);
         Object obj = Node.parseObject(packet.getData());
 
-        System.out.println("Packet received!");
+        //System.out.println("Packet received!");
 
         if(Node.as(SnakesProto.GameMessage.class, obj) != null) {
             var gameMsg = (SnakesProto.GameMessage) obj;
-            System.out.println("Game msg received!");
+            //System.out.println("Game msg received!");
 
             if(gameMsg.hasAnnouncement()) {
-                System.out.println("Announcement msg received!");
+                //System.out.println("Announcement msg received!");
 
                 for (var connection : connectionButtons) {
                     if(connection.ip.equals(packet.getAddress()) && connection.port == packet.getPort()) {
@@ -165,7 +172,7 @@ public class MenuFrame extends JFrame {
                         try {
                             System.out.println("Connecting to " + packet.getAddress() + " " + packet.getPort() + "...");
                             //node.connect(InetAddress.getLocalHost(), gameMsg.getSenderId());
-                            node.connect(packet.getAddress(), packet.getPort());
+                            node.connect(packet.getAddress(), packet.getPort(), field.getText());
                             setVisible(false);
                         } catch (IOException ex) {
                             ex.printStackTrace();

@@ -55,6 +55,9 @@ public class Board {
     }
 
     public void startNewGame() {
+        snakes.clear();
+        food.clear();
+        gamePlayers.clear();
         snakes.add(new Snake(5, 3, getHeight(), getWidth(), 0));
         boardOwnerPlayerId = 0;
         active = true;
@@ -306,11 +309,9 @@ public class Board {
         }
     }
     public void setProtoPlayers(SnakesProto.GamePlayers players) {
-        System.out.println("SET PROTO PLAYERS : " + players.getPlayersList().size());
         gamePlayers.clear();
 
         for (var p : players.getPlayersList()) {
-            System.out.println("ADD GAME PLAYER");
             gamePlayers.add(p);
         }
     }

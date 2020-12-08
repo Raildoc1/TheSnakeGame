@@ -6,6 +6,7 @@ import ru.gaiduk.snake.math.Vector2;
 
 import java.io.*;
 import java.net.*;
+import java.sql.Time;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -73,6 +74,10 @@ public class Node {
 
     private boolean gameConfigSet = false;
 
+    private String name;
+
+    public int getPort () { return port; }
+
     public Node(int port) throws SocketException {
         executorService = Executors.newFixedThreadPool(1);
         timer = new Timer();
@@ -84,9 +89,9 @@ public class Node {
         socket.setSoTimeout(TIME_OUT_MILLIS);
     }
 
-    public void connect( InetAddress ip, int port) throws IOException, ClassNotFoundException {
+    public void connect( InetAddress ip, int port, String name) throws IOException, ClassNotFoundException {
         nodeRole = SnakesProto.NodeRole.NORMAL;
-        var joinMsg = SnakesProto.GameMessage.JoinMsg.newBuilder().setName("Not Vanya, because Vanya can be only one!").build();
+        var joinMsg = SnakesProto.GameMessage.JoinMsg.newBuilder().setName(name).build();
 
         var gameMsg = SnakesProto.GameMessage.newBuilder().setJoin(joinMsg).setMsgSeq(System.currentTimeMillis()).build();
 
@@ -113,7 +118,7 @@ public class Node {
             });
         }
 
-        System.out.println("Connection failed!");
+        //System.out.println("Connection failed!");
 
     }
 
@@ -198,7 +203,9 @@ public class Node {
         }
     }
 
-    public void startNewGame() throws SocketException, UnknownHostException {
+    public void startNewGame(String name) throws SocketException, UnknownHostException {
+
+        this.name = name;
 
         gameConfigSet = true;
 
@@ -254,6 +261,12 @@ public class Node {
 //            }
 //        };
 
+        timer.cancel();
+        executorService.shutdown();
+
+        timer = new Timer();
+        executorService = Executors.newFixedThreadPool(1);
+
         timer.schedule(announcementMsgTimerTask, delayMillis, deltaTimeMillis);
         timer.schedule(gameUpdateTimerTask, delayMillis, gameConfig.getStateDelayMs());
 //        timer.schedule(listenTimerTask, delayMillis, deltaTimeMillis);
@@ -271,10 +284,13 @@ public class Node {
 
     private void listenJoin() {
 
-        System.out.println("joinListener");
+        //System.out.println("joinListener");
     }
 
     private void sendGameState() throws IOException {
+
+        board.setProtoPlayers(getGamePlayers());
+
         if (connections.size() < 1) {
             return;
         }
@@ -319,7 +335,7 @@ public class Node {
 
             // Handle join
             if(gameMsg.hasJoin()) {
-                System.out.println("Got join message from " + gameMsg.getJoin().getName() + " " + packet.getAddress() + " " + packet.getPort());
+                //System.out.println("Got join message from " + gameMsg.getJoin().getName() + " " + packet.getAddress() + " " + packet.getPort());
 
                 var answerGameMsgBuilder = SnakesProto.GameMessage.newBuilder().setMsgSeq(System.currentTimeMillis());
 
@@ -337,8 +353,6 @@ public class Node {
                 var answerGameMsg = answerGameMsgBuilder.build();
 
                 sendObjectTo(answerGameMsg, packet.getAddress(), packet.getPort());
-
-                System.out.println("AckPacket sent");
             }
 
             // Handle steer
@@ -436,6 +450,11 @@ public class Node {
         var gamePlayersBuilder = SnakesProto.GamePlayers.newBuilder();
 
         for (var connection : connections) {
+
+            if(board.getSnake(connection.playerId) == null) {
+                continue;
+            }
+
             var gamePlayerBuilder = SnakesProto.GamePlayer.newBuilder();
             gamePlayerBuilder.setId(connection.playerId)
                     .setPort(connection.port)
@@ -445,21 +464,22 @@ public class Node {
                     .setScore(board.getSnake(connection.playerId).getScore());
 
             gamePlayersBuilder.addPlayers(gamePlayerBuilder.build());
-
-            System.out.println("add connection");
         }
 
-        var thisPlayerBuilder = SnakesProto.GamePlayer.newBuilder();
-        thisPlayerBuilder.setId(board.getBoardOwnerPlayerId())
-                .setPort(0)
-                .setRole(nodeRole)
-                .setIpAddress("")
-                .setName("MASTER")
-                .setScore(board.getBoardOwnerSnake().getScore());
+        if(board.getBoardOwnerSnake() != null) {
 
-        System.out.println("add last connection!");
+            var thisPlayerBuilder = SnakesProto.GamePlayer.newBuilder();
+            thisPlayerBuilder.setId(board.getBoardOwnerPlayerId())
+                    .setPort(0)
+                    .setRole(nodeRole)
+                    .setIpAddress("")
+                    .setName(name)
+                    .setScore(board.getBoardOwnerSnake().getScore());
 
-        return gamePlayersBuilder.addPlayers(thisPlayerBuilder.build()).build();
+            gamePlayersBuilder.addPlayers(thisPlayerBuilder.build());
+        }
+
+        return gamePlayersBuilder.build();
     }
 
     private void applyState(SnakesProto.GameState state) {
