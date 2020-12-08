@@ -29,7 +29,7 @@ public class MulticastSender {
     }
 
     public void SendAnnouncementMessage(SnakesProto.GameMessage.AnnouncementMsg msg) throws IOException {
-        byte[] buf = msg.toByteArray();
+        byte[] buf = msg.toByteArray(); // TODO: create
         DatagramPacket packet = new DatagramPacket(buf, buf.length, group, port);
         socket.send(packet);
     }

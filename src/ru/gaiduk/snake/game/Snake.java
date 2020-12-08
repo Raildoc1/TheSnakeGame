@@ -22,6 +22,10 @@ public class Snake {
 
     private int playerId;
 
+    public int getPlayerId() {
+        return playerId;
+    }
+
     public Snake(Vector2 headPos, int boardHeight, int boardWidth, int playerId) {
         init(boardHeight, boardWidth);
         snake = new ArrayList<>();
@@ -46,7 +50,6 @@ public class Snake {
     }
 
     private void init(int boardHeight, int boardWidth) {
-        System.out.println("init board size: " + boardWidth + " " + boardHeight);
         direction = new Vector2(0, 1);
         this.boardHeight = boardHeight;
         this.boardWidth = boardWidth;
@@ -214,9 +217,11 @@ public class Snake {
     public void setKeyPoints(List<SnakesProto.GameState.Coord> keyPoints) {
         snake.clear();
         snake.add(new Vector2(keyPoints.get(0)));
-        keyPoints.remove(0);
 
         for (var point : keyPoints) {
+
+            if(point == keyPoints.get(0)) continue;
+
             if(point.getX() > 0) {
                 for(int i = 0; i < Math.abs(point.getX()); i++) {
                     snake.add(Vector2.Add(new Vector2(point.getX() / Math.abs(point.getX()), 0), snake.get(snake.size() - 1)));

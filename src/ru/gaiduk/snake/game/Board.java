@@ -13,7 +13,8 @@ public class Board {
     private ArrayList<Snake> snakes;
     private ArrayList<Vector2> food;
 
-    private Snake mySnake;
+    private int boardOwnerPlayerId;
+    //private Snake mySnake;
     private boolean lost = false;
 
     private Random random;
@@ -41,7 +42,7 @@ public class Board {
 
     public ArrayList<Vector2> getFood() { return (ArrayList<Vector2>) food.clone(); }
     public ArrayList<Snake> getSnakes() { return (ArrayList<Snake>) snakes.clone(); }
-    public Snake getSnake() { return mySnake; };
+    public int getBoardOwnerPlayerId() { return boardOwnerPlayerId; };
 
     public Board (SnakesProto.GameConfig gameConfig) {
         this.gameConfig = gameConfig;
@@ -52,16 +53,28 @@ public class Board {
         gamePlayers = new ArrayList<SnakesProto.GamePlayer>();
     }
 
-    public void start() {
-
-        // TEST
+    public void startNewGame() {
         snakes.add(new Snake(5, 3, getHeight(), getWidth(), 0));
-        snakes.add(new Snake(7, 15, getHeight(), getWidth(), 1));
-
-        mySnake = new Snake(15, 10, getHeight(), getWidth(), 3);
-
+        boardOwnerPlayerId = 0;
         active = true;
+    }
 
+    public void start() {
+        active = true;
+    }
+
+    public Snake getBoardOwnerSnake() {
+        for (var snake : snakes) {
+            if(snake.getPlayerId() == boardOwnerPlayerId) {
+                return snake;
+            }
+        }
+        lost = true;
+        return null;
+    }
+
+    public void setOwnerSnake(int playerId) {
+        boardOwnerPlayerId = playerId;
     }
 
     public int addSnake() {
@@ -111,9 +124,9 @@ public class Board {
             snake.move();
         }
 
-        if(!lost) {
-            mySnake.move();
-        }
+//        if(!lost) {
+//            mySnake.move();
+//        }
 
         // TODO: check snakes intersect
 
@@ -125,16 +138,16 @@ public class Board {
 
         // Eat food
         Iterator<Vector2> foodIterator = food.iterator();
-
-        while (foodIterator.hasNext()) {
-
-            var f = foodIterator.next();
-
-            if(!lost && mySnake.eatOn(f)) {
-                foodIterator.remove();
-                break;
-            }
-        }
+//
+//        while (foodIterator.hasNext()) {
+//
+//            var f = foodIterator.next();
+//
+//            if(!lost && mySnake.eatOn(f)) {
+//                foodIterator.remove();
+//                break;
+//            }
+//        }
 
         for (var snake : snakes) {
             foodIterator = food.iterator();
@@ -150,6 +163,9 @@ public class Board {
 
         // Rotate snakes
         for (var snake : snakes) {
+            if(snake.getPlayerId() == boardOwnerPlayerId) {
+                continue;
+            }
             snake.ChangeDirection(Vector2.RandomDirection());
         }
 
@@ -165,12 +181,16 @@ public class Board {
             }
         }
 
-        if(!lost && mySnake.checkSelfCollision()) {
-            lost = true;
-            Snake2Food(mySnake);
-        }
+//        if(!lost && mySnake.checkSelfCollision()) {
+//            lost = true;
+//            Snake2Food(mySnake);
+//        }
 
         // Update
+        UpdateUpdatables();
+    }
+
+    private void UpdateUpdatables() {
         for (var updatable : toUpdate) {
             updatable.Update();
         }
@@ -194,6 +214,13 @@ public class Board {
         if(lost) {
             return;
         }
+
+        var mySnake = getBoardOwnerSnake();
+
+        if(mySnake == null) {
+            return;
+        }
+
         mySnake.ChangeDirection(new Vector2(sgn(x), sgn(y)));
     }
 
@@ -223,7 +250,7 @@ public class Board {
 
         System.out.println("KEY POINTS:");
 
-        for (var p : mySnake.getKeyPoints()) {
+        for (var p : getBoardOwnerSnake().getKeyPoints()) {
             System.out.println("( " + p.getX() + "," + p.getY() + ")");
         }
     }
@@ -260,6 +287,8 @@ public class Board {
         for (var protoSnake : protoSnakes) {
             snakes.add(new Snake(getHeight(), getWidth(), protoSnake));
         }
+
+        UpdateUpdatables();
     }
 
     public void setProtoFood(List<SnakesProto.GameState.Coord> food) {

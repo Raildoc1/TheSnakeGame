@@ -58,6 +58,11 @@ public class GamePanel extends JPanel implements ActionListener, IUpdatable {
         g.setColor(new Color(156, 200, 90));
 
         for (var snake : board.getSnakes()) {
+
+            if(snake.getPlayerId() == board.getBoardOwnerPlayerId()) {
+                continue;
+            }
+
             for (var segment : snake.getSegments()) {
                 if(segment.equals(snake.getSnakeHead())) g.setColor(new Color(0, 178, 255));
                 else g.setColor(new Color(0, 196, 200));
@@ -65,9 +70,9 @@ public class GamePanel extends JPanel implements ActionListener, IUpdatable {
             }
         }
 
-        if(!board.isLost()) {
-            for (var segment : board.getSnake().getSegments()) {
-                if(segment.equals(board.getSnake().getSnakeHead())) g.setColor(new Color(197, 255, 0));
+        if(board.getBoardOwnerSnake() != null) {
+            for (var segment : board.getBoardOwnerSnake().getSegments()) {
+                if(segment.equals(board.getBoardOwnerSnake().getSnakeHead())) g.setColor(new Color(197, 255, 0));
                 else g.setColor(new Color(156, 200, 90));
                 g.fillRect((segment.getX() + 1) * grid_scale,(segment.getY() + 1) * grid_scale, grid_scale, grid_scale);
             }

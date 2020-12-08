@@ -4,7 +4,8 @@
     <list default="true" id="b4a19101-cbf5-4889-adce-9f943d295e51" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ru/gaiduk/snake/game/Board.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ru/gaiduk/snake/game/Board.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ru/gaiduk/snake/game/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ru/gaiduk/snake/game/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ru/gaiduk/snake/game/Snake.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ru/gaiduk/snake/game/Snake.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ru/gaiduk/snake/network/MulticastSender.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ru/gaiduk/snake/network/MulticastSender.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ru/gaiduk/snake/network/Node.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ru/gaiduk/snake/network/Node.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ru/gaiduk/snake/view/GamePanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ru/gaiduk/snake/view/GamePanel.java" afterDir="false" />
     </list>
@@ -97,6 +98,10 @@
     <servers />
   </component>
   <component name="WindowStateProjectService">
+    <state x="552" y="202" key="#Inspections" timestamp="1607356425260">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state x="552" y="202" key="#Inspections/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607356425260" />
     <state x="552" y="202" key="#Project_Structure" timestamp="1606673899006">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
@@ -121,22 +126,22 @@
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="485" y="0" key="#com.intellij.refactoring.rename.AutomaticRenamingDialog/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607161135922" />
-    <state width="1877" height="294" key="GridCell.Tab.0.bottom" timestamp="1607355551484">
+    <state width="1877" height="294" key="GridCell.Tab.0.bottom" timestamp="1607401586629">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="294" key="GridCell.Tab.0.bottom/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607355551484" />
-    <state width="1877" height="294" key="GridCell.Tab.0.center" timestamp="1607355551483">
+    <state width="1877" height="294" key="GridCell.Tab.0.bottom/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607401586629" />
+    <state width="1877" height="294" key="GridCell.Tab.0.center" timestamp="1607401586629">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="294" key="GridCell.Tab.0.center/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607355551483" />
-    <state width="1877" height="294" key="GridCell.Tab.0.left" timestamp="1607355551483">
+    <state width="1877" height="294" key="GridCell.Tab.0.center/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607401586629" />
+    <state width="1877" height="294" key="GridCell.Tab.0.left" timestamp="1607401586629">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="294" key="GridCell.Tab.0.left/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607355551483" />
-    <state width="1877" height="294" key="GridCell.Tab.0.right" timestamp="1607355551484">
+    <state width="1877" height="294" key="GridCell.Tab.0.left/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607401586629" />
+    <state width="1877" height="294" key="GridCell.Tab.0.right" timestamp="1607401586629">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="294" key="GridCell.Tab.0.right/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607355551484" />
+    <state width="1877" height="294" key="GridCell.Tab.0.right/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607401586629" />
     <state width="1877" height="363" key="GridCell.Tab.1.bottom" timestamp="1607188462371">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
@@ -165,9 +170,9 @@
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="664" y="442" key="com.intellij.jarRepository.RepositoryAttachDialog-DOWNLOAD/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1606896156159" />
-    <state x="690" y="316" width="540" height="456" key="extract.method.dialog" timestamp="1607355049217">
+    <state x="690" y="316" width="540" height="456" key="extract.method.dialog" timestamp="1607356466585">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state x="690" y="316" width="540" height="456" key="extract.method.dialog/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607355049217" />
+    <state x="690" y="316" width="540" height="456" key="extract.method.dialog/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607356466585" />
   </component>
 </project>

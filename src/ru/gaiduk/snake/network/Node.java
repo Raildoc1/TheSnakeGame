@@ -62,19 +62,39 @@ public class Node {
 
     public void connect() throws IOException, ClassNotFoundException {
         nodeRole = SnakesProto.NodeRole.NORMAL;
-        DatagramPacket packet = new DatagramPacket(buf, buf.length, InetAddress.getLocalHost(), 5000);
         var joinMsg = SnakesProto.GameMessage.JoinMsg.newBuilder().setName("Not Vanya, because Vanya can be only one!").build();
 
         var gameMsg = SnakesProto.GameMessage.newBuilder().setJoin(joinMsg).setMsgSeq(System.currentTimeMillis()).build();
 
-        packet.setData(obj2bytes(gameMsg));
-        socket.send(packet);
-
+        sendObjectTo(gameMsg, InetAddress.getLocalHost(), 5000);
 
         if(handleAckMsg()) {
             board.start();
+
+            handleGameStateMsgs();
+
         }
 
+    }
+
+    private void handleGameStateMsgs() throws ClassNotFoundException {
+        SnakesProto.GameMessage gameMsg;
+        while(true) {
+            try {
+                DatagramPacket packet1 = new DatagramPacket(buf, buf.length);
+                socket.receive(packet1);
+
+                Object obj = parseObject(packet1.getData());
+
+                if(as(SnakesProto.GameMessage.class, obj) != null) {
+                    gameMsg = (SnakesProto.GameMessage)obj;
+                    if(gameMsg.hasState()) {
+                        applyState(gameMsg.getState().getState());
+                        continue;
+                    }
+                }
+            } catch (IOException e) { /* IGNORE */}
+        }
     }
 
     private boolean handleAckMsg() throws ClassNotFoundException {
@@ -89,7 +109,8 @@ public class Node {
                 if(as(SnakesProto.GameMessage.class, obj) != null) {
                     gameMsg = (SnakesProto.GameMessage)obj;
                     if(gameMsg.hasAck()) {
-                        System.out.println("Joined successfully!");
+                        System.out.println("Joined successfully with id " + gameMsg.getReceiverId() + "!");
+                        board.setOwnerSnake(gameMsg.getReceiverId());
                         return true;
                     } else if (gameMsg.hasError()) {
                         System.out.println("Error occur :c");
@@ -119,7 +140,7 @@ public class Node {
 
     public void startNewGame() throws SocketException, UnknownHostException {
         nodeRole = SnakesProto.NodeRole.MASTER;
-        board.start();
+        board.startNewGame();
 
         sender = new MulticastSender();
 
@@ -190,8 +211,6 @@ public class Node {
                 if(gameMsg.hasJoin()) {
                     System.out.println("Got join message from " + gameMsg.getJoin().getName() + " " + packet.getAddress() + " " + packet.getPort());
 
-                    DatagramPacket ackPacket = new DatagramPacket(buf, buf.length, packet.getAddress(), packet.getPort());
-
                     var answerGameMsgBuilder = SnakesProto.GameMessage.newBuilder().setMsgSeq(System.currentTimeMillis());
 
                     int newSnakeId = board.addSnake();
@@ -207,8 +226,7 @@ public class Node {
 
                     var answerGameMsg = answerGameMsgBuilder.build();
 
-                    ackPacket.setData(obj2bytes(answerGameMsg));
-                    socket.send(ackPacket);
+                    sendObjectTo(answerGameMsg, packet.getAddress(), packet.getPort());
 
                     System.out.println("AckPacket sent");
                 }
@@ -221,10 +239,8 @@ public class Node {
     private Object parseObject(byte[] bytes) throws IOException, ClassNotFoundException {
         var bin = new ByteArrayInputStream(bytes);
         try (var in = new ObjectInputStream(bin)) {
-            System.out.println("Converted successfully!");
             return in.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Failed to convert.");
             e.printStackTrace();
             throw e;
         }
