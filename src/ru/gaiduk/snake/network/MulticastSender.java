@@ -28,9 +28,10 @@ public class MulticastSender {
         socket.close();
     }
 
-    public void SendAnnouncementMessage(SnakesProto.GameMessage.AnnouncementMsg msg) throws IOException {
-        byte[] buf = msg.toByteArray(); // TODO: create
-        DatagramPacket packet = new DatagramPacket(buf, buf.length, group, port);
-        socket.send(packet);
+    public void SendAnnouncementMessage(SnakesProto.GameMessage msg) throws IOException {
+        byte[] buffer = new byte[1024];
+        DatagramPacket ackPacket = new DatagramPacket(buffer, buffer.length, group, port);
+        ackPacket.setData(Node.obj2bytes(msg));
+        socket.send(ackPacket);
     }
 }

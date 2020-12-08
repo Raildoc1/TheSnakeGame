@@ -2,6 +2,7 @@ package ru.gaiduk.snake.game;
 
 import ru.gaiduk.snake.network.Node;
 import ru.gaiduk.snake.view.GameFrame;
+import ru.gaiduk.snake.view.MenuFrame;
 
 import java.awt.*;
 import java.io.IOException;
@@ -21,19 +22,23 @@ public class Main {
         Node node = new Node(Integer.parseInt(args[0]));
 
         GameFrame frame = new GameFrame(node);
+        MenuFrame menuFrame = new MenuFrame(Integer.parseInt(args[0]), frame, node);
 
         EventQueue.invokeLater(() -> {
             frame.init();
             frame.setVisible(true);
+
+            menuFrame.init();
+            menuFrame.setVisible(true);
         });
 
         int mode = Integer.parseInt(args[1]);
 
-        if(mode == 0) {
-            node.startNewGame();
-        } else {
-            node.connect();
-        }
+//        if(mode == 0) {
+//            node.startNewGame();
+//        } else {
+//            node.connect();
+//        }
 
     }
 }

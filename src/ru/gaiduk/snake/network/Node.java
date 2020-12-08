@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Node {
 
@@ -43,6 +46,8 @@ public class Node {
     private ArrayList<Connection> connections;
     private DatagramSocket socket;
 
+    private int port;
+
     private SnakesProto.NodeRole nodeRole;
     private SnakesProto.GameConfig gameConfig;
     private Board board;
@@ -53,6 +58,9 @@ public class Node {
     private TimerTask announcementMsgTimerTask;
     private TimerTask gameUpdateTimerTask;
     private TimerTask pingTimerTask;
+    private TimerTask listenTimerTask;
+
+    private ExecutorService executorService;
 
     private int deltaTimeMillis = 1000;
     private int delayMillis = 500;
@@ -64,21 +72,23 @@ public class Node {
     private boolean gameConfigSet = false;
 
     public Node(int port) throws SocketException {
+        executorService = Executors.newFixedThreadPool(1);
         timer = new Timer();
         gameConfig = SnakesProto.GameConfig.newBuilder().setStateDelayMs(100).setDeadFoodProb(.5f).build();
         board = new Board(gameConfig);
         connections = new ArrayList<>();
+        this.port = port;
         socket = new DatagramSocket(port);
         socket.setSoTimeout(TIME_OUT_MILLIS);
     }
 
-    public void connect() throws IOException, ClassNotFoundException {
+    public void connect( InetAddress ip, int port) throws IOException, ClassNotFoundException {
         nodeRole = SnakesProto.NodeRole.NORMAL;
         var joinMsg = SnakesProto.GameMessage.JoinMsg.newBuilder().setName("Not Vanya, because Vanya can be only one!").build();
 
         var gameMsg = SnakesProto.GameMessage.newBuilder().setJoin(joinMsg).setMsgSeq(System.currentTimeMillis()).build();
 
-        sendObjectTo(gameMsg, InetAddress.getLocalHost(), 5000);
+        sendObjectTo(gameMsg, ip, port);
 
         pingTimerTask = new TimerTask() {
             @Override
@@ -87,10 +97,21 @@ public class Node {
             }
         };
 
+        System.out.println("Handling ack meg...");
+
         if(handleAckMsg()) {
+            System.out.println("Got ack msg!");
             board.start();
-            handleGameStateMsgs();
+            executorService.submit(() -> {
+                try {
+                    handleGameStateMsgs();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            });
         }
+
+        System.out.println("Connection failed!");
 
     }
 
@@ -162,7 +183,7 @@ public class Node {
         return false;
     }
 
-    public byte[] obj2bytes(Object obj) throws IOException {
+    public static byte[] obj2bytes(Object obj) throws IOException {
 
         var bos = new ByteArrayOutputStream();
 
@@ -198,6 +219,7 @@ public class Node {
         gameUpdateTimerTask = new TimerTask() {
             @Override
             public void run() {
+
                 board.update();
                 try {
                     sendGameState();
@@ -222,12 +244,26 @@ public class Node {
             }
         };
 
+//        listenTimerTask = new TimerTask() {
+//            @Override
+//            public void run() {
+//                listenTick();
+//            }
+//        };
+
         timer.schedule(announcementMsgTimerTask, delayMillis, deltaTimeMillis);
         timer.schedule(gameUpdateTimerTask, delayMillis, gameConfig.getStateDelayMs());
+//        timer.schedule(listenTimerTask, delayMillis, deltaTimeMillis);
 
-        while (true) {
-            listenTick();
-        }
+        executorService.submit(() -> {
+            while(true) {
+                listenTick();
+            }
+        });
+
+//        while (true) {
+//            listenTick();
+//        }
     }
 
     private void sendGameState() throws IOException {
@@ -252,10 +288,15 @@ public class Node {
     }
 
     private void listenTick() {
+
+        System.out.println("Listen tick");
+
         try {
 
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             socket.receive(packet);
+
+            System.out.println("Packet received!");
 
             Object obj = parseObject(packet.getData());
 
@@ -306,7 +347,7 @@ public class Node {
         } catch (IOException | ClassNotFoundException e) { /*IGNORE*/ }
     }
 
-    private Object parseObject(byte[] bytes) throws IOException, ClassNotFoundException {
+    public static Object parseObject(byte[] bytes) throws IOException, ClassNotFoundException {
         var bin = new ByteArrayInputStream(bytes);
         try (var in = new ObjectInputStream(bin)) {
             return in.readObject();
@@ -335,12 +376,17 @@ public class Node {
         return board;
     }
 
-    private SnakesProto.GameMessage.AnnouncementMsg createAnnouncementMsg() {
-        return SnakesProto.GameMessage.AnnouncementMsg.newBuilder()
+    private SnakesProto.GameMessage createAnnouncementMsg() {
+
+        var gameMsgBuilder = SnakesProto.GameMessage.newBuilder().setSenderId(port).setMsgSeq(System.currentTimeMillis());
+
+        gameMsgBuilder.setAnnouncement(SnakesProto.GameMessage.AnnouncementMsg.newBuilder()
                 .setPlayers(board.getGamePlayers())
                 .setConfig(gameConfig)
                 .setCanJoin(true) // TODO: check if board has 5x5 square empty
-                .build();
+                .build());
+
+        return gameMsgBuilder.build();
     }
 
     private void sendAnnouncementMsg() throws IOException {

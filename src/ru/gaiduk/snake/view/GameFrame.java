@@ -7,7 +7,7 @@ import javax.swing.*;
 
 public class GameFrame extends JFrame {
 
-    private final static String APP_NAME = "Snake";
+    private final static String APP_NAME = "Snake Window";
 
     private static final int GRID_SCALE = 15;
 
