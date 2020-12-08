@@ -6,7 +6,6 @@ import ru.gaiduk.snake.math.Vector2;
 
 import java.io.*;
 import java.net.*;
-import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -231,6 +230,10 @@ public class Node {
                     System.out.println("AckPacket sent");
                 }
 
+                if(gameMsg.hasSteer() && gameMsg.hasSenderId()) {
+                    board.changeDirection(gameMsg.getSteer().getDirection(), gameMsg.getSenderId());
+                }
+
             }
 
         } catch (IOException | ClassNotFoundException e) { /*IGNORE*/ }
@@ -246,8 +249,15 @@ public class Node {
         }
     }
 
-    public void changeDirection(int x, int y) {
-        board.changeDirection(x, y);
+    public void changeDirection(int x, int y) throws IOException {
+
+        if(nodeRole == SnakesProto.NodeRole.MASTER) {
+            board.changeOwnerDirection(x, y);
+        } else {
+            var steerMsg = SnakesProto.GameMessage.SteerMsg.newBuilder().setDirection(Vector2.vector2direction(new Vector2(x, y))).build();
+            var gameMsg = SnakesProto.GameMessage.newBuilder().setSenderId(board.getBoardOwnerPlayerId()).setSteer(steerMsg).setMsgSeq(System.currentTimeMillis()).build();
+            sendObjectTo(gameMsg,InetAddress.getLocalHost(), 5000);
+        }
     }
 
     public Vector2 getBoardSize() {

@@ -4,7 +4,6 @@ import me.ippolitov.fit.snakes.SnakesProto;
 import ru.gaiduk.snake.math.Vector2;
 import ru.gaiduk.snake.view.IUpdatable;
 
-import java.awt.image.AreaAveragingScaleFilter;
 import java.util.*;
 
 public class Board {
@@ -124,10 +123,6 @@ public class Board {
             snake.move();
         }
 
-//        if(!lost) {
-//            mySnake.move();
-//        }
-
         // TODO: check snakes intersect
 
         // Create new food
@@ -138,16 +133,6 @@ public class Board {
 
         // Eat food
         Iterator<Vector2> foodIterator = food.iterator();
-//
-//        while (foodIterator.hasNext()) {
-//
-//            var f = foodIterator.next();
-//
-//            if(!lost && mySnake.eatOn(f)) {
-//                foodIterator.remove();
-//                break;
-//            }
-//        }
 
         for (var snake : snakes) {
             foodIterator = food.iterator();
@@ -162,12 +147,12 @@ public class Board {
 
 
         // Rotate snakes
-        for (var snake : snakes) {
-            if(snake.getPlayerId() == boardOwnerPlayerId) {
-                continue;
-            }
-            snake.ChangeDirection(Vector2.RandomDirection());
-        }
+//        for (var snake : snakes) {
+//            if(snake.getPlayerId() == boardOwnerPlayerId) {
+//                continue;
+//            }
+//            snake.changeDirection(Vector2.RandomDirection());
+//        }
 
         // Check self collision
 
@@ -210,7 +195,16 @@ public class Board {
         return f < gameConfig.getDeadFoodProb();
     }
 
-    public void changeDirection(int x, int y) {
+    private Snake getSnake(int playerId) {
+        for (var snake: snakes) {
+            if(snake.getPlayerId() == playerId) {
+                return snake;
+            }
+        }
+        return null;
+    }
+
+    public void changeOwnerDirection(int x, int y) {
         if(lost) {
             return;
         }
@@ -221,7 +215,18 @@ public class Board {
             return;
         }
 
-        mySnake.ChangeDirection(new Vector2(sgn(x), sgn(y)));
+        mySnake.changeDirection(new Vector2(sgn(x), sgn(y)));
+    }
+
+    public void changeDirection(SnakesProto.Direction direction, int playerId) {
+
+        var snake = getSnake(playerId);
+
+        if(snake == null) {
+            return;
+        }
+
+        snake.changeDirection(Vector2.direction2vector(direction));
     }
 
     public List<SnakesProto.GameState.Snake> getSnakesList() {

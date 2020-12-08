@@ -46,7 +46,9 @@ public class Snake {
         state = protoSnake.getState();
         snake = new ArrayList<>();
         setKeyPoints(protoSnake.getPointsList());
-        setDirection(protoSnake.getHeadDirection());
+
+        direction = Vector2.direction2vector(protoSnake.getHeadDirection());
+
     }
 
     private void init(int boardHeight, int boardWidth) {
@@ -55,7 +57,7 @@ public class Snake {
         this.boardWidth = boardWidth;
     }
 
-    public void ChangeDirection(Vector2 direction)
+    public void changeDirection(Vector2 direction)
     {
         if(canMove(direction)){
             this.direction = direction;
@@ -133,35 +135,6 @@ public class Snake {
         return true;
     }
 
-    public SnakesProto.Direction getDirection() {
-        if(direction.getX() == 1) {
-            return SnakesProto.Direction.RIGHT;
-        } else if (direction.getX() == -1) {
-            return SnakesProto.Direction.LEFT;
-        } else if(direction.getY() == 1) {
-            return SnakesProto.Direction.UP;
-        } else {
-            return SnakesProto.Direction.DOWN;
-        }
-    }
-
-    public void setDirection(SnakesProto.Direction dir) {
-        switch (dir) {
-            case UP:
-                direction = new Vector2(0, 1);
-                break;
-            case DOWN:
-                direction = new Vector2(0, -1);
-                break;
-            case LEFT:
-                direction = new Vector2(-1, 0);
-                break;
-            case RIGHT:
-                direction = new Vector2(1, 0);
-                break;
-        }
-    }
-
     public ArrayList<Vector2> getKeyPoints() {
 
         if(snake.size() == 1) {
@@ -202,7 +175,7 @@ public class Snake {
         var builder = SnakesProto.GameState.Snake.newBuilder()
                 .setState(state)
                 .setPlayerId(playerId)
-                .setHeadDirection(getDirection());
+                .setHeadDirection(Vector2.vector2direction(direction));
 
         var head = getSnakeHead();
 

@@ -66,6 +66,31 @@ public class Vector2 {
         return new Vector2(a.getX() * c, a.getY() * c);
     }
 
+    public static SnakesProto.Direction vector2direction(Vector2 vector) {
+        if(vector.getX() == 1) {
+            return SnakesProto.Direction.RIGHT;
+        } else if (vector.getX() == -1) {
+            return SnakesProto.Direction.LEFT;
+        } else if(vector.getY() == 1) {
+            return SnakesProto.Direction.UP;
+        } else {
+            return SnakesProto.Direction.DOWN;
+        }
+    }
+
+    public static Vector2 direction2vector(SnakesProto.Direction direction) {
+        switch (direction) {
+            case UP:
+                return new Vector2(0, 1);
+            case DOWN:
+                return new Vector2(0, -1);
+            case LEFT:
+                return new Vector2(-1, 0);
+            default:
+                return new Vector2(1, 0);
+        }
+    }
+
     @Override
     public String toString() {
         return "Vector2{" +
