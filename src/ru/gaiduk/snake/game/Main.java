@@ -25,7 +25,7 @@ public class Main {
         MenuFrame menuFrame = new MenuFrame(Integer.parseInt(args[0]), frame, node);
 
         EventQueue.invokeLater(() -> {
-            frame.init();
+            frame.init(menuFrame);
             frame.setVisible(true);
 
             menuFrame.init();

@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -203,13 +202,14 @@ public class Node {
         nodeRole = SnakesProto.NodeRole.MASTER;
         board.startNewGame();
 
-        sender = new MulticastSender();
+        sender = new MulticastSender(this);
 
         announcementMsgTimerTask = new TimerTask() {
             @Override
             public void run() {
                 try {
                     sendAnnouncementMsg();
+                    sender.tryToReceiveJoinMsg();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -266,6 +266,11 @@ public class Node {
 //        }
     }
 
+    private void listenJoin() {
+
+        System.out.println("joinListener");
+    }
+
     private void sendGameState() throws IOException {
         if (connections.size() < 1) {
             return;
@@ -289,62 +294,66 @@ public class Node {
 
     private void listenTick() {
 
-        System.out.println("Listen tick");
+        //System.out.println("Listen tick");
 
         try {
 
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             socket.receive(packet);
 
-            System.out.println("Packet received!");
+            //System.out.println("Packet received!");
 
-            Object obj = parseObject(packet.getData());
-
-            if(as(SnakesProto.GameMessage.class, obj) != null) {
-                var gameMsg = (SnakesProto.GameMessage)obj;
-
-                // Handle join
-                if(gameMsg.hasJoin()) {
-                    System.out.println("Got join message from " + gameMsg.getJoin().getName() + " " + packet.getAddress() + " " + packet.getPort());
-
-                    var answerGameMsgBuilder = SnakesProto.GameMessage.newBuilder().setMsgSeq(System.currentTimeMillis());
-
-                    int newSnakeId = board.addSnake();
-                    if(newSnakeId < 0) {
-                        var errorMsg = SnakesProto.GameMessage.ErrorMsg.newBuilder().setErrorMessage("Board is full").build();
-                        answerGameMsgBuilder.setError(errorMsg);
-                    } else {
-                        connections.add(new Connection(packet.getAddress(), packet.getPort(), System.currentTimeMillis()));
-
-                        var ackMsg = SnakesProto.GameMessage.AckMsg.newBuilder().build();
-                        answerGameMsgBuilder.setReceiverId(newSnakeId).setAck(ackMsg);
-                    }
-
-                    var answerGameMsg = answerGameMsgBuilder.build();
-
-                    sendObjectTo(answerGameMsg, packet.getAddress(), packet.getPort());
-
-                    System.out.println("AckPacket sent");
-                }
-
-                // Handle steer
-                if(gameMsg.hasSteer() && gameMsg.hasSenderId()) {
-                    board.changeDirection(gameMsg.getSteer().getDirection(), gameMsg.getSenderId());
-                }
-
-                // Handle ping
-                if(gameMsg.hasPing()) {
-                    for (var con : connections) {
-                        if(con.address.equals(packet.getAddress()) && con.port == packet.getPort()) {
-                            con.setTimeMillis(System.currentTimeMillis());
-                            break;
-                        }
-                    }
-                }
-
-            }
+            handleReceivedPacket(packet);
 
         } catch (IOException | ClassNotFoundException e) { /*IGNORE*/ }
+    }
+
+    public void handleReceivedPacket(DatagramPacket packet) throws IOException, ClassNotFoundException {
+        Object obj = parseObject(packet.getData());
+
+        if(as(SnakesProto.GameMessage.class, obj) != null) {
+            var gameMsg = (SnakesProto.GameMessage)obj;
+
+            // Handle join
+            if(gameMsg.hasJoin()) {
+                System.out.println("Got join message from " + gameMsg.getJoin().getName() + " " + packet.getAddress() + " " + packet.getPort());
+
+                var answerGameMsgBuilder = SnakesProto.GameMessage.newBuilder().setMsgSeq(System.currentTimeMillis());
+
+                int newSnakeId = board.addSnake();
+                if(newSnakeId < 0) {
+                    var errorMsg = SnakesProto.GameMessage.ErrorMsg.newBuilder().setErrorMessage("Board is full").build();
+                    answerGameMsgBuilder.setError(errorMsg);
+                } else {
+                    connections.add(new Connection(packet.getAddress(), packet.getPort(), System.currentTimeMillis()));
+
+                    var ackMsg = SnakesProto.GameMessage.AckMsg.newBuilder().build();
+                    answerGameMsgBuilder.setReceiverId(newSnakeId).setAck(ackMsg);
+                }
+
+                var answerGameMsg = answerGameMsgBuilder.build();
+
+                sendObjectTo(answerGameMsg, packet.getAddress(), packet.getPort());
+
+                System.out.println("AckPacket sent");
+            }
+
+            // Handle steer
+            if(gameMsg.hasSteer() && gameMsg.hasSenderId()) {
+                board.changeDirection(gameMsg.getSteer().getDirection(), gameMsg.getSenderId());
+            }
+
+            // Handle ping
+            if(gameMsg.hasPing()) {
+                for (var con : connections) {
+                    if(con.address.equals(packet.getAddress()) && con.port == packet.getPort()) {
+                        con.setTimeMillis(System.currentTimeMillis());
+                        break;
+                    }
+                }
+            }
+
+        }
     }
 
     public static Object parseObject(byte[] bytes) throws IOException, ClassNotFoundException {
@@ -390,7 +399,7 @@ public class Node {
     }
 
     private void sendAnnouncementMsg() throws IOException {
-        sender.SendAnnouncementMessage(createAnnouncementMsg());
+        sender.sendAnnouncementMessage(createAnnouncementMsg());
     }
 
     private SnakesProto.GameMessage.StateMsg getGameStateMsg() {
@@ -409,6 +418,11 @@ public class Node {
     public void printKeyPoints() {
         board.printKeyPoints();
         return;
+    }
+
+    public void close() {
+        timer.cancel();
+        sender.close();
     }
 
 }
