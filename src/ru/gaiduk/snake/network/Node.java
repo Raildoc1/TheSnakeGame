@@ -7,6 +7,7 @@ import ru.gaiduk.snake.math.Vector2;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -18,9 +19,17 @@ public class Node {
     private class Connection {
         InetAddress address;
         int port;
-        public Connection(InetAddress address, int port) {
+        long timeMillis;
+        public Connection(InetAddress address, int port, long timeMillis) {
             this.address = address;
             this.port = port;
+            this.timeMillis = timeMillis;
+        }
+        public void setTimeMillis(long timeMillis) {
+            this.timeMillis = timeMillis;
+        }
+        public long getTimeMillis() {
+            return timeMillis;
         }
     }
 
@@ -43,17 +52,19 @@ public class Node {
     private Timer timer;
     private TimerTask announcementMsgTimerTask;
     private TimerTask gameUpdateTimerTask;
-    private TimerTask listenTimerTask;
+    private TimerTask pingTimerTask;
 
     private int deltaTimeMillis = 1000;
-    private int listenDeltaTimeMillis = 100;
     private int delayMillis = 500;
 
     private MulticastSender sender;
 
     private long lastSeq = 0;
 
+    private boolean gameConfigSet = false;
+
     public Node(int port) throws SocketException {
+        timer = new Timer();
         gameConfig = SnakesProto.GameConfig.newBuilder().setStateDelayMs(100).setDeadFoodProb(.5f).build();
         board = new Board(gameConfig);
         connections = new ArrayList<>();
@@ -69,13 +80,29 @@ public class Node {
 
         sendObjectTo(gameMsg, InetAddress.getLocalHost(), 5000);
 
+        pingTimerTask = new TimerTask() {
+            @Override
+            public void run() {
+                pingMaster();
+            }
+        };
+
         if(handleAckMsg()) {
             board.start();
-
             handleGameStateMsgs();
-
         }
 
+    }
+
+    private void pingMaster() {
+        var pingMsg = SnakesProto.GameMessage.PingMsg.newBuilder().build();
+        var gameMsg = SnakesProto.GameMessage.newBuilder().setPing(pingMsg).setMsgSeq(System.currentTimeMillis()).build();
+
+        try {
+            sendObjectTo(gameMsg, InetAddress.getLocalHost(), 5000);
+        } catch (IOException e) {
+            /* IGNORE */
+        }
     }
 
     private void handleGameStateMsgs() throws ClassNotFoundException {
@@ -149,12 +176,14 @@ public class Node {
     }
 
     public void startNewGame() throws SocketException, UnknownHostException {
+
+        gameConfigSet = true;
+
         nodeRole = SnakesProto.NodeRole.MASTER;
         board.startNewGame();
 
         sender = new MulticastSender();
 
-        timer = new Timer();
         announcementMsgTimerTask = new TimerTask() {
             @Override
             public void run() {
@@ -175,6 +204,21 @@ public class Node {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+
+
+                long currentTime = System.currentTimeMillis();
+
+                Iterator<Connection> connectionIterator = connections.iterator();
+
+                while (connectionIterator.hasNext()) {
+                    var con = connectionIterator.next();
+
+                    if(currentTime - con.getTimeMillis() > gameConfig.getNodeTimeoutMs()) {
+                        connectionIterator.remove();
+                        System.out.println("Client disconnected!");
+                    }
+                }
+
             }
         };
 
@@ -218,6 +262,7 @@ public class Node {
             if(as(SnakesProto.GameMessage.class, obj) != null) {
                 var gameMsg = (SnakesProto.GameMessage)obj;
 
+                // Handle join
                 if(gameMsg.hasJoin()) {
                     System.out.println("Got join message from " + gameMsg.getJoin().getName() + " " + packet.getAddress() + " " + packet.getPort());
 
@@ -228,7 +273,7 @@ public class Node {
                         var errorMsg = SnakesProto.GameMessage.ErrorMsg.newBuilder().setErrorMessage("Board is full").build();
                         answerGameMsgBuilder.setError(errorMsg);
                     } else {
-                        connections.add(new Connection(packet.getAddress(), packet.getPort()));
+                        connections.add(new Connection(packet.getAddress(), packet.getPort(), System.currentTimeMillis()));
 
                         var ackMsg = SnakesProto.GameMessage.AckMsg.newBuilder().build();
                         answerGameMsgBuilder.setReceiverId(newSnakeId).setAck(ackMsg);
@@ -241,8 +286,19 @@ public class Node {
                     System.out.println("AckPacket sent");
                 }
 
+                // Handle steer
                 if(gameMsg.hasSteer() && gameMsg.hasSenderId()) {
                     board.changeDirection(gameMsg.getSteer().getDirection(), gameMsg.getSenderId());
+                }
+
+                // Handle ping
+                if(gameMsg.hasPing()) {
+                    for (var con : connections) {
+                        if(con.address.equals(packet.getAddress()) && con.port == packet.getPort()) {
+                            con.setTimeMillis(System.currentTimeMillis());
+                            break;
+                        }
+                    }
                 }
 
             }
@@ -296,7 +352,11 @@ public class Node {
     }
 
     private void applyState(SnakesProto.GameState state) {
-        gameConfig = state.getConfig();
+        if(!gameConfigSet) {
+            gameConfig = state.getConfig();
+            timer.schedule(pingTimerTask, delayMillis, gameConfig.getPingDelayMs());
+            gameConfigSet = true;
+        }
         board.applyState(state);
     }
 
