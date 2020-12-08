@@ -6,7 +6,6 @@ import ru.gaiduk.snake.math.Vector2;
 
 import java.io.*;
 import java.net.*;
-import java.sql.Time;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -136,8 +135,6 @@ public class Node {
                 }
             });
         }
-
-        //System.out.println("Connection failed!");
 
     }
 
