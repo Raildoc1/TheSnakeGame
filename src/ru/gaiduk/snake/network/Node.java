@@ -6,10 +6,7 @@ import ru.gaiduk.snake.math.Vector2;
 
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -22,10 +19,16 @@ public class Node {
         InetAddress address;
         int port;
         long timeMillis;
-        public Connection(InetAddress address, int port, long timeMillis) {
+        int playerId;
+        String name;
+        SnakesProto.NodeRole nodeRole;
+        public Connection(InetAddress address, int port, long timeMillis, int playerId, SnakesProto.NodeRole role, String name) {
             this.address = address;
             this.port = port;
             this.timeMillis = timeMillis;
+            this.playerId = playerId;
+            this.nodeRole = role;
+            this.name = name;
         }
         public void setTimeMillis(long timeMillis) {
             this.timeMillis = timeMillis;
@@ -276,7 +279,7 @@ public class Node {
             return;
         }
 
-        var stateMsg = SnakesProto.GameMessage.StateMsg.newBuilder().setState(board.getGameState()).build();
+        var stateMsg = SnakesProto.GameMessage.StateMsg.newBuilder().setState(getGameState()).build();
 
         var gameMsg = SnakesProto.GameMessage.newBuilder().setMsgSeq(System.currentTimeMillis()).setState(stateMsg).build();
 
@@ -325,7 +328,7 @@ public class Node {
                     var errorMsg = SnakesProto.GameMessage.ErrorMsg.newBuilder().setErrorMessage("Board is full").build();
                     answerGameMsgBuilder.setError(errorMsg);
                 } else {
-                    connections.add(new Connection(packet.getAddress(), packet.getPort(), System.currentTimeMillis()));
+                    connections.add(new Connection(packet.getAddress(), packet.getPort(), System.currentTimeMillis(), newSnakeId, SnakesProto.NodeRole.NORMAL, gameMsg.getJoin().getName()));
 
                     var ackMsg = SnakesProto.GameMessage.AckMsg.newBuilder().build();
                     answerGameMsgBuilder.setReceiverId(newSnakeId).setAck(ackMsg);
@@ -403,7 +406,60 @@ public class Node {
     }
 
     private SnakesProto.GameMessage.StateMsg getGameStateMsg() {
-        return SnakesProto.GameMessage.StateMsg.newBuilder().setState(board.getGameState()).build();
+        return SnakesProto.GameMessage.StateMsg.newBuilder().setState(getGameState()).build();
+    }
+
+
+    public SnakesProto.GameState getGameState() {
+
+        var stateBuilder = SnakesProto.GameState.newBuilder().setStateOrder(board.getStateOrder());
+
+        for (var snake : board.getSnakesList()) {
+            stateBuilder.addSnakes(snake);
+        }
+
+        for (var food : board.getFoodList()) {
+            stateBuilder.addFoods(food);
+        }
+
+        stateBuilder.setPlayers(getGamePlayers());
+
+        stateBuilder.setConfig(gameConfig);
+
+        return stateBuilder.build();
+    }
+
+    public SnakesProto.GamePlayers getGamePlayers() {
+
+        List<SnakesProto.GamePlayer> players = new ArrayList<>();
+
+        var gamePlayersBuilder = SnakesProto.GamePlayers.newBuilder();
+
+        for (var connection : connections) {
+            var gamePlayerBuilder = SnakesProto.GamePlayer.newBuilder();
+            gamePlayerBuilder.setId(connection.playerId)
+                    .setPort(connection.port)
+                    .setRole(connection.nodeRole)
+                    .setIpAddress(connection.address.toString())
+                    .setName(connection.name)
+                    .setScore(board.getSnake(connection.playerId).getScore());
+
+            gamePlayersBuilder.addPlayers(gamePlayerBuilder.build());
+
+            System.out.println("add connection");
+        }
+
+        var thisPlayerBuilder = SnakesProto.GamePlayer.newBuilder();
+        thisPlayerBuilder.setId(board.getBoardOwnerPlayerId())
+                .setPort(0)
+                .setRole(nodeRole)
+                .setIpAddress("")
+                .setName("MASTER")
+                .setScore(board.getBoardOwnerSnake().getScore());
+
+        System.out.println("add last connection!");
+
+        return gamePlayersBuilder.addPlayers(thisPlayerBuilder.build()).build();
     }
 
     private void applyState(SnakesProto.GameState state) {

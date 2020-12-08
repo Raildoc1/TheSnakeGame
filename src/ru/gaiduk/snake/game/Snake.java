@@ -19,6 +19,8 @@ public class Snake {
 
     private int playerId;
 
+    private int score = 0;
+
     public int getPlayerId() {
         return playerId;
     }
@@ -79,17 +81,23 @@ public class Snake {
     }
 
     public boolean eatOn(Vector2 pos){
+
         for (var segment : snake) {
             if(pos.equals(segment)) {
                 //snake.add(pos);
                 snake.add(0, pos);
                 hasEatenOnThisIteration = true;
+                score++;
                 return true;
             }
         }
         hasEatenOnThisIteration = false;
         return false;
 
+    }
+
+    public int getScore() {
+        return score;
     }
 
     public boolean checkSelfCollision() {

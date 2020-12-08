@@ -36,6 +36,8 @@ public class Board {
         return gameConfig.getHeight();
     }
 
+    public int getStateOrder() { return stateOrder; }
+
     public boolean isLost() { return lost; }
     public boolean isActive() { return active;}
 
@@ -106,8 +108,8 @@ public class Board {
 
         SnakesProto.GamePlayers.Builder builder = SnakesProto.GamePlayers.newBuilder();
 
-        for (int i = 0; i < gamePlayers.size(); i++) {
-            builder.setPlayers(i, gamePlayers.get(i));
+        for (var player : gamePlayers) {
+            builder.addPlayers(player);
         }
 
         return builder.build();
@@ -195,7 +197,7 @@ public class Board {
         return f < gameConfig.getDeadFoodProb();
     }
 
-    private Snake getSnake(int playerId) {
+    public Snake getSnake(int playerId) {
         for (var snake: snakes) {
             if(snake.getPlayerId() == playerId) {
                 return snake;
@@ -304,9 +306,11 @@ public class Board {
         }
     }
     public void setProtoPlayers(SnakesProto.GamePlayers players) {
+        System.out.println("SET PROTO PLAYERS : " + players.getPlayersList().size());
         gamePlayers.clear();
 
         for (var p : players.getPlayersList()) {
+            System.out.println("ADD GAME PLAYER");
             gamePlayers.add(p);
         }
     }

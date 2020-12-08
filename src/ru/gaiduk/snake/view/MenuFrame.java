@@ -157,7 +157,7 @@ public class MenuFrame extends JFrame {
                     }
                 }
 
-                JButton button = new JButton("connection");
+                JButton button = new JButton("connect to " + packet.getAddress() + " " + packet.getPort());
 
                 button.addActionListener(new AbstractAction() {
                     @Override

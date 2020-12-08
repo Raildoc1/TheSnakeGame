@@ -21,7 +21,11 @@ public class GamePanel extends JPanel implements ActionListener, IUpdatable {
     private final int DELAY = 25;
 
     private int grid_scale;
-    public GamePanel(Board board, int grid_scale) {
+
+    private JTextArea textArea;
+
+    public GamePanel(Board board, int grid_scale, JTextArea textArea) {
+        this.textArea = textArea;
         this.board = board;
         setBackground(Color.BLACK);
         this.grid_scale = grid_scale;
@@ -35,20 +39,6 @@ public class GamePanel extends JPanel implements ActionListener, IUpdatable {
         if(!board.isActive()) {
             return;
         }
-
-        /*
-        if(board.isLost()) {
-            g.setColor(new Color(228, 61, 56));
-            g.setFont(g.getFont().deriveFont(g.getFont().getSize() * 3f));
-            g.drawString("You Lost!", (board.getWidth() + 2) * grid_scale / 2 - 70, (board.getHeight() + 4) * grid_scale / 2);
-            g.setFont(g.getFont().deriveFont(g.getFont().getSize() / 3f));
-            g.drawString("(press any key)", (board.getWidth() + 2) * grid_scale / 2 - 50, (board.getHeight() + 4) * grid_scale / 2 + 20);
-            g.setColor(new Color(57, 228, 69));
-            g.drawString("Your score: " + board.getSnakeSize(), (board.getWidth() + 2) * grid_scale / 2 - 50, (board.getHeight() + 4) * grid_scale / 2 + 40);
-            g.drawString("Highest: " + board.getHighestScore(), (board.getWidth() + 2) * grid_scale / 2 - 50, (board.getHeight() + 4) * grid_scale / 2 + 60);
-            return;
-        }
-        */
 
         g.setColor(new Color(226, 226, 226));
         g.fillRect(0,0, grid_scale*(board.getWidth() + 1), grid_scale);
@@ -78,23 +68,17 @@ public class GamePanel extends JPanel implements ActionListener, IUpdatable {
             }
         }
 
-        g.setColor(new Color(200, 77, 32));
+        g.setColor(new Color(200, 73, 51));
 
         for (var food : board.getFood()) {
             g.fillRect((food.getX() + 1) * grid_scale,(food.getY() + 1) * grid_scale, grid_scale, grid_scale);
         }
-        
-//        for(Vector2 v : board.getSnake()) {
-//            if(v == board.getSnakeHead()) g.setColor(new Color(255, 255, 0));
-//            else g.setColor(new Color(156, 200, 90));
-//            g.fillRect((v.x + 1) * grid_scale,(v.y + 1) * grid_scale, grid_scale, grid_scale);
-//        }
-        //g.setColor(new Color(71, 210, 206));
-        //g.fillRect((board.foodPosition.x + 1) * grid_scale,(board.foodPosition.y + 1) * grid_scale, grid_scale, grid_scale);
 
-        //g.setColor(new Color(0, 0, 0));
-        //g.setFont(g.getFont().deriveFont(g.getFont().getSize() * 1.3f));
-        //g.drawString("Score: " + board.getScore(), 5, 13);
+
+        textArea.setText("");
+        for (var player : board.getGamePlayers().getPlayersList()) {
+            textArea.append(player.getId() + " " + player.getName() + "..............." + player.getScore() + "\n");
+        }
 
         Toolkit.getDefaultToolkit().sync();
     }
