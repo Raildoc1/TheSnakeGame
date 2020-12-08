@@ -96,6 +96,8 @@ public class Node {
 
     public void connect( InetAddress ip, int port, String name) throws IOException, ClassNotFoundException {
 
+        this.name = name;
+
         masterIp = ip;
         masterPort = port;
 
@@ -109,7 +111,13 @@ public class Node {
         pingTimerTask = new TimerTask() {
             @Override
             public void run() {
-                pingMaster();
+                try {
+                    pingMaster();
+                } catch (SocketException e) {
+                    e.printStackTrace();
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                }
             }
         };
 
@@ -133,7 +141,16 @@ public class Node {
 
     }
 
-    private void pingMaster() {
+    private void pingMaster() throws SocketException, UnknownHostException {
+
+        if(System.currentTimeMillis() - masterTimeMillis > gameConfig.getNodeTimeoutMs()) {
+            System.out.println("Master disconnected :c");
+            if(nodeRole == SnakesProto.NodeRole.DEPUTY) {
+                nodeRole = SnakesProto.NodeRole.MASTER;
+                startNewGame(name);
+            }
+        }
+
         var pingMsg = SnakesProto.GameMessage.PingMsg.newBuilder().build();
         var gameMsg = SnakesProto.GameMessage.newBuilder().setPing(pingMsg).setMsgSeq(System.currentTimeMillis()).build();
 
@@ -166,6 +183,7 @@ public class Node {
 
                     if(gameMsg.hasState()) {
                         applyState(gameMsg.getState().getState());
+                        masterTimeMillis = System.currentTimeMillis();
                         continue;
                     }
 
