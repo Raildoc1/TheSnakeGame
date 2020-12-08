@@ -3,10 +3,7 @@ package ru.gaiduk.snake.game;
 import me.ippolitov.fit.snakes.SnakesProto;
 import ru.gaiduk.snake.math.Vector2;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class Snake {
 
@@ -84,7 +81,8 @@ public class Snake {
     public boolean eatOn(Vector2 pos){
         for (var segment : snake) {
             if(pos.equals(segment)) {
-                snake.add(pos);
+                //snake.add(pos);
+                snake.add(0, pos);
                 hasEatenOnThisIteration = true;
                 return true;
             }
@@ -150,12 +148,13 @@ public class Snake {
             return result;
         }
 
-        Vector2 prevDirection = Vector2.Sub(snake.get(1), getSnakeHead());
+        Vector2 prevDirection = Vector2.clampDirection(Vector2.Sub(snake.get(1), getSnakeHead()), boardWidth, boardHeight) ;
         Vector2 curDirection;
+        System.out.println("Cur direction = " + prevDirection.toString());
         int amount = 1;
 
         for(int i = 1; i < snake.size() - 1; i++) {
-            curDirection = Vector2.Sub(snake.get(i + 1), snake.get(i));
+            curDirection = Vector2.clampDirection(Vector2.Sub(snake.get(i + 1), snake.get(i)), boardWidth, boardHeight);
             if(prevDirection.equals(curDirection)) {
                 amount++;
             } else {
@@ -198,12 +197,15 @@ public class Snake {
             if(point.getX() != 0) {
                 for(int i = 0; i < Math.abs(point.getX()); i++) {
                     Vector2 newSegment = Vector2.Add(new Vector2(point.getX() / Math.abs(point.getX()), 0), snake.get(snake.size() - 1));
+                    newSegment = Vector2.clamp(newSegment, boardWidth, boardHeight);
                     snake.add(newSegment);
                 }
                 continue;
             } else {
                 for(int i = 0; i < Math.abs(point.getY()); i++) {
-                    snake.add(Vector2.Add(new Vector2(0, point.getY() / Math.abs(point.getY())), snake.get(snake.size() - 1)));
+                    Vector2 newSegment = Vector2.Add(new Vector2(0, point.getY() / Math.abs(point.getY())), snake.get(snake.size() - 1));
+                    newSegment = Vector2.clamp(newSegment, boardWidth, boardHeight);
+                    snake.add(newSegment);
                 }
                 continue;
             }

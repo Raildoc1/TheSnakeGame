@@ -51,6 +51,8 @@ public class Node {
 
     private MulticastSender sender;
 
+    private long lastSeq = 0;
+
     public Node(int port) throws SocketException {
         gameConfig = SnakesProto.GameConfig.newBuilder().setStateDelayMs(100).setDeadFoodProb(.5f).build();
         board = new Board(gameConfig);
@@ -86,7 +88,16 @@ public class Node {
                 Object obj = parseObject(packet1.getData());
 
                 if(as(SnakesProto.GameMessage.class, obj) != null) {
+
                     gameMsg = (SnakesProto.GameMessage)obj;
+
+                    if(gameMsg.getMsgSeq() < lastSeq) {
+                        System.out.println("Message Ignored!");
+                        continue;
+                    } else {
+                        lastSeq = gameMsg.getMsgSeq();
+                    }
+
                     if(gameMsg.hasState()) {
                         applyState(gameMsg.getState().getState());
                         continue;

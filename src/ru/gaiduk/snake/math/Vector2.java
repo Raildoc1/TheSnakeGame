@@ -91,6 +91,22 @@ public class Vector2 {
         }
     }
 
+    public static Vector2 clampDirection(Vector2 direction, int a, int b) {
+        if(direction.getX() > 1) {
+            return new Vector2(direction.getX() - a, direction.getY());
+        } else if(direction.getX() < -1) {
+            return new Vector2(direction.getX() + a, direction.getY());
+        }
+
+        if(direction.getY() > 1) {
+            return new Vector2(direction.getX(), direction.getY() - b);
+        } else if(direction.getY() < -1) {
+            return new Vector2(direction.getX(), direction.getY() + b);
+        }
+
+        return direction;
+    }
+
     @Override
     public String toString() {
         return "Vector2{" +
