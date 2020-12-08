@@ -76,12 +76,17 @@ public class Node {
 
     private String name;
 
+    private InetAddress masterIp;
+    private int masterPort;
+
+    private long masterTimeMillis = 0;
+
     public int getPort () { return port; }
 
     public Node(int port) throws SocketException {
         executorService = Executors.newFixedThreadPool(1);
         timer = new Timer();
-        gameConfig = SnakesProto.GameConfig.newBuilder().setStateDelayMs(100).setDeadFoodProb(.5f).build();
+        gameConfig = SnakesProto.GameConfig.newBuilder().setStateDelayMs(100).setDeadFoodProb(.5f).setNodeTimeoutMs(1000).build();
         board = new Board(gameConfig);
         connections = new ArrayList<>();
         this.port = port;
@@ -90,12 +95,16 @@ public class Node {
     }
 
     public void connect( InetAddress ip, int port, String name) throws IOException, ClassNotFoundException {
+
+        masterIp = ip;
+        masterPort = port;
+
         nodeRole = SnakesProto.NodeRole.NORMAL;
         var joinMsg = SnakesProto.GameMessage.JoinMsg.newBuilder().setName(name).build();
 
         var gameMsg = SnakesProto.GameMessage.newBuilder().setJoin(joinMsg).setMsgSeq(System.currentTimeMillis()).build();
 
-        sendObjectTo(gameMsg, ip, port);
+        sendObjectTo(gameMsg, masterIp, masterPort);
 
         pingTimerTask = new TimerTask() {
             @Override
@@ -103,6 +112,8 @@ public class Node {
                 pingMaster();
             }
         };
+
+        masterTimeMillis = System.currentTimeMillis();
 
         System.out.println("Handling ack meg...");
 
@@ -127,7 +138,7 @@ public class Node {
         var gameMsg = SnakesProto.GameMessage.newBuilder().setPing(pingMsg).setMsgSeq(System.currentTimeMillis()).build();
 
         try {
-            sendObjectTo(gameMsg, InetAddress.getLocalHost(), 5000);
+            sendObjectTo(gameMsg, masterIp, masterPort);
         } catch (IOException e) {
             /* IGNORE */
         }
@@ -156,6 +167,13 @@ public class Node {
                     if(gameMsg.hasState()) {
                         applyState(gameMsg.getState().getState());
                         continue;
+                    }
+
+                    if(gameMsg.hasRoleChange()) {
+                        if(gameMsg.getRoleChange().getReceiverRole() == SnakesProto.NodeRole.DEPUTY) {
+                            nodeRole = SnakesProto.NodeRole.DEPUTY;
+                            System.out.println("I am DEPUTY");
+                        }
                     }
                 }
             } catch (IOException e) { /* IGNORE */}
@@ -246,9 +264,26 @@ public class Node {
                     var con = connectionIterator.next();
 
                     if(currentTime - con.getTimeMillis() > gameConfig.getNodeTimeoutMs()) {
+                        System.out.println("Client disconnected!" + con.address + " " + con.port);
                         connectionIterator.remove();
-                        System.out.println("Client disconnected!");
                     }
+                }
+
+                for (var connection : connections) {
+                    if(connection.nodeRole == SnakesProto.NodeRole.DEPUTY) {return;}
+                }
+
+                if(connections.size() < 1) return;
+
+                connections.get(0).nodeRole = SnakesProto.NodeRole.DEPUTY;
+
+                var roleChangeMsg = SnakesProto.GameMessage.RoleChangeMsg.newBuilder().setReceiverRole(SnakesProto.NodeRole.DEPUTY).build();
+                var gameMsg = SnakesProto.GameMessage.newBuilder().setMsgSeq(System.currentTimeMillis()).setRoleChange(roleChangeMsg).build();
+
+                try {
+                    sendObjectTo(gameMsg, connections.get(0).address, connections.get(0).port);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
 
             }
@@ -362,6 +397,9 @@ public class Node {
 
             // Handle ping
             if(gameMsg.hasPing()) {
+
+                //System.out.println("Got ping from " + packet.getSocketAddress());
+
                 for (var con : connections) {
                     if(con.address.equals(packet.getAddress()) && con.port == packet.getPort()) {
                         con.setTimeMillis(System.currentTimeMillis());
@@ -390,7 +428,7 @@ public class Node {
         } else {
             var steerMsg = SnakesProto.GameMessage.SteerMsg.newBuilder().setDirection(Vector2.vector2direction(new Vector2(x, y))).build();
             var gameMsg = SnakesProto.GameMessage.newBuilder().setSenderId(board.getBoardOwnerPlayerId()).setSteer(steerMsg).setMsgSeq(System.currentTimeMillis()).build();
-            sendObjectTo(gameMsg,InetAddress.getLocalHost(), 5000);
+            sendObjectTo(gameMsg, masterIp, masterPort);
         }
     }
 

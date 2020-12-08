@@ -3,9 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="b4a19101-cbf5-4889-adce-9f943d295e51" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ru/gaiduk/snake/game/Board.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ru/gaiduk/snake/game/Board.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ru/gaiduk/snake/network/Node.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ru/gaiduk/snake/network/Node.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ru/gaiduk/snake/view/MenuFrame.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ru/gaiduk/snake/view/MenuFrame.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,7 +41,7 @@
     <property name="project.structure.side.proportion" value="0.2" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
-  <component name="RunManager" selected="Application.MainMaster">
+  <component name="RunManager" selected="Application.MainNormal">
     <configuration name="MainMaster" type="Application" factoryName="Application" temporary="true">
       <option name="MAIN_CLASS_NAME" value="ru.gaiduk.snake.game.Main" />
       <module name="TheSnakeGame" />
@@ -139,22 +137,22 @@
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="485" y="0" key="#com.intellij.refactoring.rename.AutomaticRenamingDialog/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607161135922" />
-    <state width="1877" height="294" key="GridCell.Tab.0.bottom" timestamp="1607439732194">
+    <state width="1877" height="294" key="GridCell.Tab.0.bottom" timestamp="1607442965291">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="294" key="GridCell.Tab.0.bottom/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607439732194" />
-    <state width="1877" height="294" key="GridCell.Tab.0.center" timestamp="1607439732194">
+    <state width="1877" height="294" key="GridCell.Tab.0.bottom/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607442965291" />
+    <state width="1877" height="294" key="GridCell.Tab.0.center" timestamp="1607442965291">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="294" key="GridCell.Tab.0.center/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607439732194" />
-    <state width="1877" height="294" key="GridCell.Tab.0.left" timestamp="1607439732194">
+    <state width="1877" height="294" key="GridCell.Tab.0.center/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607442965291" />
+    <state width="1877" height="294" key="GridCell.Tab.0.left" timestamp="1607442965291">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="294" key="GridCell.Tab.0.left/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607439732194" />
-    <state width="1877" height="294" key="GridCell.Tab.0.right" timestamp="1607439732194">
+    <state width="1877" height="294" key="GridCell.Tab.0.left/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607442965291" />
+    <state width="1877" height="294" key="GridCell.Tab.0.right" timestamp="1607442965291">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1877" height="294" key="GridCell.Tab.0.right/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607439732194" />
+    <state width="1877" height="294" key="GridCell.Tab.0.right/0.0.1920.1080/1920.0.1920.1080@0.0.1920.1080" timestamp="1607442965291" />
     <state width="1877" height="363" key="GridCell.Tab.1.bottom" timestamp="1607402728532">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
